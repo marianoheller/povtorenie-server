@@ -25,7 +25,7 @@ function(accessToken, refreshToken, profile, done) {
     }
 ));
 
-passport.use(new LocalStrategy(
+passport.use('local-login', new LocalStrategy(
     function(username, password, done) {
         User.findOne({ username: username }, function (err, user) {
             if (err) { return done(err); }
@@ -37,12 +37,47 @@ passport.use(new LocalStrategy(
 ));
 
 
-passport.serializeUser(function(user, cb) {
-    cb(null, user);
-});
+passport.use('local-signup', new LocalStrategy({
+        usernameField : 'username',
+        passwordField : 'password',
+    },
+    function(username, password, done) {
+        // asynchronous
+        // User.findOne wont fire unless data is sent back
+        process.nextTick(function() {
+            // find a user whose email is the same as the forms email
+            // we are checking to see if the user trying to login already exists
+            User.findOne({ username: username }, function (err, user) {
+                if (err) { return done(err); }
+                if (user) { return done( null, false ) }
+                else {
+                    // if there is no user with that username
+                    var newUser = new User();
+                    newUser.username = email;
+                    newUser.password = User.generateHash(password);
+                    // save the user
+                    newUser.save(function(err) {
+                        if (err) throw err;
+                        return done(null, newUser);
+                    });
+                }
+            });
 
-passport.deserializeUser(function(obj, cb) {
-    cb(null, obj);
+        });
+    }
+));
+
+
+
+passport.serializeUser(function(user, cb) {
+    cb(null, user.id);
+});
+  
+passport.deserializeUser(function(id, cb) {
+    User.findById(id, function (err, user) {
+        if (err) return cb(err);
+        cb(null, user);
+    });
 });
 
 
@@ -53,10 +88,9 @@ passport.deserializeUser(function(obj, cb) {
  * redirecting the user to google.com.  After authorization, Google
  * will redirect the user back to this application at /auth/google/callback
  */
-router.get('/google', passport.authenticate('google', { 
-    scope: ['profile'] 
-})
-);
+router.get('/google', passport.authenticate('google', { scope: ['profile'] }) );
+
+
 
 /**
  * GET /auth/google/callback
@@ -75,6 +109,35 @@ router.get('/google/callback',
 
 
 /**
+ * Register user in local DB
+ */
+router.post('/register', (req, res) => {
+    if (!req.body) return res.sendStatus(400)
+    const { displayName, username, password } = req.body;
+    if (!displayName || !username || !password ) return res.sendStatus(400);
+
+    const newUser = new User({
+        displayName: displayName,
+        username: username,
+        password: User.generateHash(password)
+    });
+    newUser.save( (err) => {
+        if(err) return res.status(409).send("Couldn't create the user");
+        res.status(200).json(newUser);
+    })
+});
+
+
+/**
+ * Logins user
+ */
+router.post('/login', passport.authenticate('local-login'), (req, res) => {
+    res.sendStatus(200);
+});
+
+
+
+/**
  * Get user's profile info.
  * Returns profile info as json or 401 in case of error.
  * Useful route to check if the user is logged in.
@@ -84,8 +147,13 @@ router.get('/profile', function(req, res) {
     
     const userID = String(req.user._id);
     User.findOne({ _id: userID })
-    .then( result => res.json(result) )
-    .catch( error => res.status(401).send(String(error)) )
+    .then( result => res.json({
+        username: result.username,
+        admin: result.admin,
+        words: result.words,
+        displayName: result.displayName
+    }) )
+    .catch( error => res.status(400).send(String(error)) )
 })
 
 

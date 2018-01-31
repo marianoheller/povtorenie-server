@@ -16,6 +16,7 @@ process.on('unhandledRejection', r => console.log(r));
 //Routes imports
 const index = require('./routes/index');
 const auth = require('./routes/auth');
+const words = require('./routes/words');
 
 //====================================================
 const app = express();
@@ -25,16 +26,16 @@ mongoose.Promise = global.Promise;
 /* mongoose.set('debug', true); */
 mongoose.connect(process.env.MONGO_DB, (err) => { if(err) console.log("Connection error", err)} );
 
-// Passport
+// Logging
+app.use(morgan('dev'));
+
+// Session & Passport
 app.use(require('express-session')({ secret: 'random string', resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 // CORS
 app.use(cors());
-
-// Logging
-app.use(morgan('dev'));
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -52,6 +53,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 //Routes
 app.use('/', index);
 app.use('/auth', auth);
+app.use('/words', (req, res, next) => {
+  if(!req.isAuthenticated() || !req.user._id ) return res.status(401).send("Unauthorized");
+  next();
+});
+app.use('/words', words);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

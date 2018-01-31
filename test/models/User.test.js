@@ -1,25 +1,11 @@
-var expect = require('chai').expect;
+var chai = require('chai');
+var expect = chai.expect;
 var sinon = require('sinon');
+var sinonChai = require("sinon-chai");
+chai.should();
+chai.use(sinonChai);
  
 var User = require('../../models/User');
-/* 
-const userSchema = new Schema({
-    displayName: {
-      type: String,
-      required: true
-    },
-    username: {
-      type: String,
-      required: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    googleID: String,
-    admin: { type: Boolean, default: false },
-    words: [{ word: String, date: Date }]
-  }); */
  
 
 describe('User model fields', function(done) {
@@ -71,30 +57,40 @@ describe('User model fields', function(done) {
 });
 
 
-describe('User model static methods', function(done) {
+
+describe('User model createUser static method', function(done) {
+
     beforeEach(function() {
-        sinon.stub(User, 'find');
+
     });
  
     afterEach(function() {
-        User.find.restore();
+        
     });
 
-    it('should create an user correctly', function() {
-        var inputData = { 
-            googleID: 'asdasdasdasda',
-            lastName: 'lastName',
-            firstName: 'firstName'
-        };
-        var expectedModels = [a, b];
-        Meme.find.yields(null, expectedModels);
-        var req = { params: { } };
-        var res = {
-            send: sinon.stub()
-        };
- 
-        routes.allMemes(req, res);
- 
-        sinon.assert.calledWith(res.send, expectedModels);
+    it('createUser should create an user correctly', function() {
+        sinon.stub(User, 'create').resolves( {} );
+        const callback= sinon.spy();
+
+        return User.createUser("", "", "", callback )
+        .then( () => {
+            expect(callback).to.have.been.called;
+            expect(callback).to.have.been.calledWith(null);
+
+            User.create.restore();
+        } )
+    });
+
+    it('createUser should handle errors correctly', function() {
+        sinon.stub(User, 'create').rejects( {} );
+        const callback= sinon.spy();
+
+        return User.createUser( "", "", "", callback )
+        .then( () => {
+            expect(callback).to.have.been.called;
+            expect(callback).to.have.been.calledWith( {}, null );
+
+            User.create.restore();
+        } )
     });
 });

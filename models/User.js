@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+var bcrypt   = require('bcrypt-nodejs');
 
 mongoose.Promise = global.Promise;
 //=====================================
@@ -7,11 +8,12 @@ mongoose.Promise = global.Promise;
 const userSchema = new Schema({
   displayName: {
     type: String,
-    required: true
+    required: true,
   },
   username: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   password: {
     type: String,
@@ -27,7 +29,7 @@ const userSchema = new Schema({
 // Static methods
 
 userSchema.statics.createUser = function(googleID, lastName, firstName, callback) {
-  User.create({
+  return User.create({
     googleID: googleID,
     displayName: firstName + " " + lastName
   })
@@ -36,7 +38,6 @@ userSchema.statics.createUser = function(googleID, lastName, firstName, callback
     callback(null, result);
   })
   .catch((err) => {
-    console.log(err);
     callback(err, null);
   })
 }
@@ -61,6 +62,25 @@ userSchema.statics.findOrCreate = function(userID, googleID, lastName, firstName
     callback(error, null)
   })
 }
+
+
+userSchema.statics.generateHash = function(password) {
+  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+};
+
+
+//=====================================
+// Instance methods
+
+// checking if password is valid
+userSchema.methods.verifyPassword = function(password) {
+  try {
+    var ret = bcrypt.compareSync(password, this.password);
+  } catch (error) {
+    return false;
+  }
+  return ret;
+};
 
 
 const User = mongoose.model('User', userSchema);
