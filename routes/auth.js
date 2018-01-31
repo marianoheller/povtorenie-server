@@ -40,8 +40,9 @@ passport.use('local-login', new LocalStrategy(
 passport.use('local-signup', new LocalStrategy({
         usernameField : 'username',
         passwordField : 'password',
+        passReqToCallback: true
     },
-    function(username, password, done) {
+    function(req, username, password, done) {
         // asynchronous
         // User.findOne wont fire unless data is sent back
         process.nextTick(function() {
@@ -53,7 +54,8 @@ passport.use('local-signup', new LocalStrategy({
                 else {
                     // if there is no user with that username
                     var newUser = new User();
-                    newUser.username = email;
+                    newUser.displayName = req.body.displayName || username
+                    newUser.username = username;
                     newUser.password = User.generateHash(password);
                     // save the user
                     newUser.save(function(err) {
