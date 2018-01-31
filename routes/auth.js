@@ -113,19 +113,12 @@ router.get('/google/callback',
 /**
  * Register user in local DB
  */
-router.post('/register', (req, res) => {
-    if (!req.body) return res.sendStatus(400)
-    const { displayName, username, password } = req.body;
-    if (!displayName || !username || !password ) return res.sendStatus(400);
-
-    const newUser = new User({
-        displayName: displayName,
-        username: username,
-        password: User.generateHash(password)
-    });
-    newUser.save( (err) => {
-        if(err) return res.status(409).send("Couldn't create the user");
-        res.status(200).json(newUser);
+router.post('/register', passport.authenticate('local-signup'), (req, res) => {
+    res.json({
+        username: req.user.username,
+        admin: req.user.admin,
+        words: req.user.words,
+        displayName: req.user.displayName
     })
 });
 
@@ -134,7 +127,12 @@ router.post('/register', (req, res) => {
  * Logins user
  */
 router.post('/login', passport.authenticate('local-login'), (req, res) => {
-    res.sendStatus(200);
+    res.json({
+        username: req.user.username,
+        admin: req.user.admin,
+        words: req.user.words,
+        displayName: req.user.displayName
+    })
 });
 
 
@@ -147,15 +145,12 @@ router.post('/login', passport.authenticate('local-login'), (req, res) => {
 router.get('/profile', function(req, res) {
     if(!req.isAuthenticated() || !req.user._id ) return res.status(401).send("Unauthorized");
     
-    const userID = String(req.user._id);
-    User.findOne({ _id: userID })
-    .then( result => res.json({
-        username: result.username,
-        admin: result.admin,
-        words: result.words,
-        displayName: result.displayName
-    }) )
-    .catch( error => res.status(400).send(String(error)) )
+    res.json({
+        username: req.user.username,
+        admin: req.user.admin,
+        words: req.user.words,
+        displayName: req.user.displayName
+    })
 })
 
 
