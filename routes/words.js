@@ -46,8 +46,12 @@ router.post('/sync', function(req, res, next) {
     .then( user => {
         const syncedWords = uniq( user.words.concat(req.body.words) );
         user.words = syncedWords;
+        console.log("Sync'ed words", syncedWords);
         user.save( (err) => {
-            if(err) return res.sendStatus(409);
+            if(err) {
+                console.log(err);
+                return res.sendStatus(409);
+            }
             res.status(200).json({
                 words: user.syncedWords
             });
