@@ -21,7 +21,9 @@ const userSchema = new Schema({
   },
   googleID: String,
   admin: { type: Boolean, default: false },
-  words: [{ word: String, date: Date }]
+  words: [{
+      type: String
+  }]
 });
 
 
