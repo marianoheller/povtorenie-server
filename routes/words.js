@@ -44,15 +44,23 @@ router.post('/sync', function(req, res, next) {
     const userID = String(req.user._id);
     User.findOne({ _id: userID })
     .then( user => {
-        user.words = req.body.words;
+        const syncedWords = uniq( user.words.concat(req.body.words) );
+        user.words = syncedWords;
         user.save( (err) => {
             if(err) return res.sendStatus(409);
             res.status(200).json({
-                words: user.words
+                words: user.syncedWords
             });
         })
     })
     .catch( error => res.status(400).send(String(error)) )
 });
+
+function uniq(a) {
+    var seen = {};
+    return a.filter(function(item) {
+        return seen.hasOwnProperty(item) ? false : (seen[item] = true);
+    });
+}
 
 module.exports = router;
