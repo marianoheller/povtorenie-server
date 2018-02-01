@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
-const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -27,15 +26,25 @@ mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO_DB, (err) => { if(err) console.log("Connection error", err)} );
 
 // Logging
-app.use(morgan('dev'));
+app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'));
 
 // Session & Passport
-app.use(require('express-session')({ secret: 'random string', resave: true, saveUninitialized: true }));
+app.use(require('express-session')({ 
+  cookie: { 
+    path: '/', 
+    httpOnly: false, 
+    secure: false, 
+    maxAge: null 
+  },
+  secret: 'random string', 
+  resave: true, 
+  saveUninitialized: true 
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 // CORS
-app.use(cors());
+app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -43,7 +52,6 @@ app.set('view engine', 'pug');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
