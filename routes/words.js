@@ -9,10 +9,13 @@ router.post('/add', function(req, res, next) {
     const userID = String(req.user._id);
     User.findOne({ _id: userID })
     .then( user => {
-        user.words = [...user.words, req.body.word];
+        const newWords = uniq([...user.words, req.body.word]);
+        user.words = newWords
         user.save( (err) => {
             if(err) return res.sendStatus(409);
-            res.sendStatus(200);
+            return res.json({
+                words: newWords
+            });
         })
     } )
     .catch( error => res.status(400).send(String(error)) )
@@ -25,12 +28,14 @@ router.post('/remove', function(req, res, next) {
     const userID = String(req.user._id);
     User.findOne({ _id: userID })
     .then( user => {
-        const targetIndex = user.words.findIndex( (word) => word===req.body.word );
-        if( targetIndex !== -1 ) user.words.splice(targetIndex, 1);
+        const words = user.words;
+        const targetIndex = words.findIndex( (word) => word===req.body.word );
+        if( targetIndex !== -1 ) words.splice(targetIndex, 1);
+        user.words = words;
         user.save( (err) => {
             if(err) return res.sendStatus(409);
-            res.status(200).json({
-                words: user.words
+            return res.json({
+                words: words
             });
         })
     })
@@ -52,8 +57,8 @@ router.post('/sync', function(req, res, next) {
                 console.log(err);
                 return res.sendStatus(409);
             }
-            res.status(200).json({
-                words: user.syncedWords
+            return res.json({
+                words: syncedWords
             });
         })
     })
