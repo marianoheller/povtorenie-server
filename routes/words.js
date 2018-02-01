@@ -37,4 +37,22 @@ router.post('/remove', function(req, res, next) {
     .catch( error => res.status(400).send(String(error)) )
 });
 
+
+router.post('/sync', function(req, res, next) {
+    if( !req.body || !req.body.words ) return res.sendStatus(400);
+
+    const userID = String(req.user._id);
+    User.findOne({ _id: userID })
+    .then( user => {
+        user.words = req.body.words;
+        user.save( (err) => {
+            if(err) return res.sendStatus(409);
+            res.status(200).json({
+                words: user.words
+            });
+        })
+    })
+    .catch( error => res.status(400).send(String(error)) )
+});
+
 module.exports = router;
