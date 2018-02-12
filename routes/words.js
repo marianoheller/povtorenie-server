@@ -1,6 +1,5 @@
 var express = require('express');
 var router = express.Router();
-var translate = require('translate');
 const User = require('../models/User');
 
 
@@ -67,21 +66,6 @@ router.post('/sync', function(req, res, next) {
 });
 
 
-router.get('/translate', function(req, res) {
-    if( !req.query.word ) return res.sendStatus(400);
-
-    translate(req.query.word, {
-        from: 'ru',
-        to: 'en',
-        engine: 'yandex',
-        key: process.env.YANDEX_KEY  
-    }).then(text => {
-        res.json({ translation: text });
-    }).catch( (err) => {
-        console.log(err);
-        res.status(500).send(err.message || err);
-    });
-})
 
 module.exports = router;
 

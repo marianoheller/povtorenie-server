@@ -16,6 +16,7 @@ process.on('unhandledRejection', r => console.log(r));
 const index = require('./routes/index');
 const auth = require('./routes/auth');
 const words = require('./routes/words');
+const utils = require('./routes/utils');
 
 //====================================================
 const app = express();
@@ -72,6 +73,7 @@ app.use('/words', (req, res, next) => {
   next();
 });
 app.use('/words', words);
+app.use('/utils', utils);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
